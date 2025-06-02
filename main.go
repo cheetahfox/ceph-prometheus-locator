@@ -1,5 +1,5 @@
 /*
-Simple Go Program to locacte which server ceph is running it's managed Prometheus.
+Simple Go Program to locate which server ceph is running it's managed Prometheus.
 
 This might only be useful for me; since I want to pull metrics from a ceph managed
 Prometheus server and I don't want to make any modifications to the ceph cluster. I
@@ -16,6 +16,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/cheetahfox/ceph-prometheus-locator/health"
+	"github.com/cheetahfox/ceph-prometheus-locator/router"
+
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,5 +30,10 @@ func main() {
 	prometheus := fiberprometheus.New("ceph_prometheus_locator")
 	prometheus.RegisterAt(locator, "/metrics")
 	locator.Use(prometheus.Middleware)
+
+	health.Ready = true
+
+	// Setup routes
+	router.SetupRoutes(locator)
 
 }
