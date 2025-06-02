@@ -15,6 +15,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/cheetahfox/ceph-prometheus-locator/health"
 	"github.com/cheetahfox/ceph-prometheus-locator/router"
@@ -36,4 +39,19 @@ func main() {
 	// Setup routes
 	router.SetupRoutes(locator)
 
+	// Listen for Sigint or SigTerm and exit if you get them.
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	<-done
+	fmt.Println("Shutdown Started")
 }
