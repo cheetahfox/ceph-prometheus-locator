@@ -9,7 +9,7 @@ import (
 
 func SetupRoutes(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Singularity Running running") // send text
+		return c.SendString("Ceph Locator Running") // Let us know this is running.
 	})
 
 	app.Get("/healthz", health.GetHealthz)

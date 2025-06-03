@@ -39,6 +39,13 @@ func main() {
 	// Setup routes
 	router.SetupRoutes(locator)
 
+	// Start the server.
+	go func() {
+		if err := locator.Listen(":8080"); err != nil {
+			panic(err)
+		}
+	}()
+
 	// Listen for Sigint or SigTerm and exit if you get them.
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
