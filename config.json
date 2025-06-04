@@ -1,0 +1,26 @@
+[
+    {
+        "url": "http://192.168.66.70:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "merope"
+    },
+    {
+        "url": "http://192.168.66.69:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "atlas"
+    },
+    {
+        "url": "http://192.168.66.71:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "electra"
+    },
+    {
+        "url": "http://192.168.66.72:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "taygeta"
+    },
+    {
+        "url": "http://192.168.66.73:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "maia"
+    },
+    {
+        "url": "http://192.168.66.74:8765/sd/prometheus/sd-config?service=node-exporter",
+        "hostname": "asterope"
+    }
+]
