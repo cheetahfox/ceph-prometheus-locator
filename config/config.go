@@ -9,7 +9,8 @@ import (
 var Urls = []Config{}
 
 type Config struct {
-	HostUrl string `json:"hosts"`
+	HostUrl  string `json:"url"`
+	HostName string `json:"hostname"`
 }
 
 func init() {
