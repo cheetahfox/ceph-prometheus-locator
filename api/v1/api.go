@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/cheetahfox/ceph-prometheus-locator/config"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -25,6 +26,10 @@ func GetLocation(c *fiber.Ctx) error {
 func getHostUrl() (string, error) {
 	// This function should contain the logic to determine the host URL of the Ceph managed Prometheus server.
 	// For now, it returns a placeholder URL.
-	fake := "http://example-ceph-prometheus-server:9090"
-	return fake, nil
+	activeHost := "http://example-ceph-prometheus-server:9090"
+	if len(config.Urls) > 0 {
+		// If there are hosts configured, return the first one.
+		activeHost = string(config.Urls[0].HostUrl)
+	}
+	return activeHost, nil
 }

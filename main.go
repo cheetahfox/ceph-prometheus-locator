@@ -34,8 +34,6 @@ func main() {
 	prometheus.RegisterAt(locator, "/metrics")
 	locator.Use(prometheus.Middleware)
 
-	health.Ready = true
-
 	// Setup routes
 	router.SetupRoutes(locator)
 
@@ -45,6 +43,9 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	// Set the service as ready.
+	health.Ready = true
 
 	// Listen for Sigint or SigTerm and exit if you get them.
 	sigs := make(chan os.Signal, 1)
