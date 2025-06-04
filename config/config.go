@@ -47,5 +47,11 @@ func readHosts() error {
 		return err
 	}
 
+	if os.Getenv("DEBUG") == "true" {
+		for _, url := range Urls {
+			log.Printf("Loaded URL: %s, Hostname: %s\n", url.HostUrl, url.HostName)
+		}
+	}
+
 	return nil
 }
