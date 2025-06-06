@@ -7,6 +7,7 @@ import (
 )
 
 var Urls = []Config{}
+var Debug bool
 
 type Config struct {
 	HostUrl  string `json:"url"`
@@ -16,6 +17,10 @@ type Config struct {
 func init() {
 	if err := readHosts(); err != nil {
 		panic("Failed to read hosts: " + err.Error())
+	}
+	if os.Getenv("DEBUG") == "true" {
+		Debug = true
+		log.Println("Debug mode is enabled")
 	}
 }
 
@@ -47,7 +52,7 @@ func readHosts() error {
 		return err
 	}
 
-	if os.Getenv("DEBUG") == "true" {
+	if Debug {
 		for _, url := range Urls {
 			log.Printf("Loaded URL: %s, Hostname: %s\n", url.HostUrl, url.HostName)
 		}
