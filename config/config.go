@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 )
 
 var Urls = []Config{}
 var Debug bool
+var RefreshInterval int = 60
 
 type Config struct {
 	HostUrl  string `json:"url"`
@@ -21,6 +23,14 @@ func init() {
 	if os.Getenv("DEBUG") == "true" {
 		Debug = true
 		log.Println("Debug mode is enabled")
+	}
+	if interval := os.Getenv("REFRESH_INTERVAL"); interval != "" {
+		if parsedInterval, err := strconv.Atoi(interval); err == nil {
+			RefreshInterval = parsedInterval
+			log.Printf("Refresh interval set to %d seconds\n", RefreshInterval)
+		} else {
+			log.Printf("Invalid REFRESH_INTERVAL value: %s, using default %d seconds\n", interval, RefreshInterval)
+		}
 	}
 }
 
