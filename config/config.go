@@ -34,9 +34,8 @@ func init() {
 	}
 }
 
+// readHosts reads the configuration file and populates the Urls slice with the host configurations.
 func readHosts() error {
-	// This function should contain the logic to read the hosts from a configuration file or environment variables.
-	// For now, it returns a placeholder list of hosts.
 	var configFile string
 	if os.Getenv("LOCATOR_CONFIG") != "" {
 		// If the environment variable is set, use it.

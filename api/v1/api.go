@@ -8,11 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// GetLocation handles the request to redirect to the active Ceph managed Prometheus server
 func GetLocation(c *fiber.Ctx) error {
-	// This is a placeholder for the actual logic to find the ceph managed Prometheus server.
-	// In a real implementation, you would query the Ceph cluster or configuration to find the
-	// appropriate server and return its address.
-
 	serverUrl, _, err := getHostUrl()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -24,8 +21,6 @@ func GetLocation(c *fiber.Ctx) error {
 }
 
 func getHostUrl() (string, bool, error) {
-	// This function should contain the logic to determine the host URL of the Ceph managed Prometheus server.
-	// For now, it returns a placeholder URL.
 	activeHostUrl, running, err := cephlocator.GetActiveHost()
 	if err != nil {
 		// If there is an error retrieving the active host, return an error.
