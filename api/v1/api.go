@@ -20,10 +20,7 @@ func GetLocation(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "Ceph managed Prometheus server location",
-		"server":  serverUrl,
-	})
+	return c.Redirect(serverUrl, fiber.StatusFound)
 }
 
 func getHostUrl() (string, bool, error) {
