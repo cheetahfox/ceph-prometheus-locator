@@ -1,9 +1,11 @@
 package cephlocator
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/cheetahfox/ceph-prometheus-locator/config"
@@ -25,7 +27,7 @@ func init() {
 // GetActiveHost returns the URL of the first active host if available.
 // If no hosts are configured, it returns an empty string and false
 func GetActiveHost() (string, bool, error) {
-	var activeHost string
+	var activeHostUrl, activeHost string
 	var foundActive bool
 
 	if len(Hosts) == 0 {
@@ -41,7 +43,16 @@ func GetActiveHost() (string, bool, error) {
 		}
 	}
 
-	return activeHost, foundActive, nil
+	if foundActive {
+		hostUrl, err := stripHttpParam(activeHost)
+		if err != nil {
+			log.Printf("Error stripping HTTP parameters from host URL %s: %v\n", activeHost, err)
+			return "", false, err
+		}
+		activeHostUrl = hostUrl
+	}
+
+	return activeHostUrl, foundActive, nil
 }
 
 func StartLocator() error {
@@ -120,4 +131,23 @@ func checkHosts(hostName string) {
 			Hosts[hostName].Active = false
 		}
 	}
+}
+
+// stripHttpParam removes any http parameters from the host URL.
+// My configfile will have URL with a query parameter so we need to strip it
+// and best to do it here so we can use the host URL in the redirect and append
+// the query parameters that the incoming request has.
+func stripHttpParam(baseUrl string) (string, error) {
+	if baseUrl == "" {
+		return "", errors.New("base URL is empty")
+	}
+
+	u, err := url.Parse(baseUrl)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse URL %s: %w", baseUrl, err)
+	}
+
+	hostUrl := u.Host + u.Path
+
+	return hostUrl, nil
 }
