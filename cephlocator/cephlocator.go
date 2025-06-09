@@ -19,7 +19,6 @@ type Host struct {
 }
 
 func init() {
-	// Initialize the Hosts map to store active hosts.
 	Hosts = make(map[string]*Host)
 }
 
@@ -30,12 +29,10 @@ func GetActiveHost() (string, bool, error) {
 	var foundActive bool
 
 	if len(Hosts) == 0 {
-		// If no Hosts are configured, return an error or a default value.
 		err := fmt.Errorf("No active Ceph managed Prometheus server found. Please configure hosts in the config file.")
 		return "", false, err
 	}
 
-	// Iterate through the Hosts map to find the first active host.
 	for _, host := range Hosts {
 		if host.Active {
 			activeHost = host.HostUrl
@@ -48,9 +45,6 @@ func GetActiveHost() (string, bool, error) {
 }
 
 func StartLocator() error {
-	// This function should contain the logic to start the locator service.
-	// For now, it does nothing.
-
 	for _, url := range config.Urls {
 		if config.Debug {
 			log.Printf("Starting check for %s\n", url.HostName)
