@@ -15,7 +15,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/cheetahfox/ceph-prometheus-locator/cephlocator"
 	"github.com/cheetahfox/ceph-prometheus-locator/health"
 	"github.com/cheetahfox/ceph-prometheus-locator/router"
 
@@ -31,9 +35,39 @@ func main() {
 	prometheus.RegisterAt(locator, "/metrics")
 	locator.Use(prometheus.Middleware)
 
-	health.Ready = true
-
 	// Setup routes
 	router.SetupRoutes(locator)
 
+	// Start the server.
+	go func() {
+		if err := locator.Listen(":8080"); err != nil {
+			panic(err)
+		}
+	}()
+
+	// Start the locator service.
+	err := cephlocator.StartLocator()
+	if err != nil {
+		fmt.Println("Failed to start locator service:", err)
+		panic(err)
+	}
+
+	// Set the service as ready.
+	health.Ready = true
+
+	// Listen for Sigint or SigTerm and exit if you get them.
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	<-done
+	fmt.Println("Shutdown Started")
 }
