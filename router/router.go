@@ -17,5 +17,10 @@ func SetupRoutes(app *fiber.App) {
 
 	// API routes
 	api := app.Group("/api/v1/", logger.New())
-	api.Get("/", v1.GetLocation)
+	api.Get("/", v1.GetActiveHost)
+	api.Get("status", v1.GetActiveHost)
+
+	// SD Path
+	sdPath := app.Group("/sd/prometheus/", logger.New())
+	sdPath.Get("sd-config", v1.GetLocation)
 }

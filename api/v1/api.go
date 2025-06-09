@@ -9,15 +9,52 @@ import (
 )
 
 // GetLocation handles the request to redirect to the active Ceph managed Prometheus server
+// It retrieves the active host URL and appends any query parameters from the request.
 func GetLocation(c *fiber.Ctx) error {
-	serverUrl, _, err := getHostUrl()
+	var header string = "http://"
+
+	url, _, err := getHostUrl()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
 		})
 	}
 
-	return c.Redirect(serverUrl, fiber.StatusFound)
+	hostUrl := header + url
+	qparms := c.Queries()
+	if len(qparms) > 0 {
+		// If there are query parameters, append them to the host URL.
+		hostUrl += "?"
+		for key, value := range qparms {
+			hostUrl += key + "=" + value + "&"
+		}
+	}
+
+	if config.Debug {
+		log.Printf("Redirecting to active Ceph managed Prometheus server: %s\n", hostUrl)
+	}
+
+	return c.Redirect(hostUrl, fiber.StatusFound)
+}
+
+func GetActiveHost(c *fiber.Ctx) error {
+	// This function is similar to GetLocation but returns the active host URL without redirecting.
+	url, running, err := getHostUrl()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve Ceph managed Prometheus server URL",
+		})
+	}
+
+	if !running {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No active Ceph managed Prometheus server found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"url": url,
+	})
 }
 
 func getHostUrl() (string, bool, error) {
