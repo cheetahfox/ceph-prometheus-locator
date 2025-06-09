@@ -37,6 +37,26 @@ func GetLocation(c *fiber.Ctx) error {
 	return c.Redirect(hostUrl, fiber.StatusFound)
 }
 
+func GetActiveHost(c *fiber.Ctx) error {
+	// This function is similar to GetLocation but returns the active host URL without redirecting.
+	url, running, err := getHostUrl()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve Ceph managed Prometheus server URL",
+		})
+	}
+
+	if !running {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No active Ceph managed Prometheus server found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"url": url,
+	})
+}
+
 func getHostUrl() (string, bool, error) {
 	activeHostUrl, running, err := cephlocator.GetActiveHost()
 	if err != nil {
