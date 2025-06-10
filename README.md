@@ -1,49 +1,42 @@
 # ceph-prometheus-locator
 
+This project is half programming practice and half solving a real problem. 
 
-We need to figure out which server is currently serving up this output.
+## What even is this thing?
 
-For example this is what ceph is doing.
+This is an extremely opinionated way to solve the problem of using Ceph's built-in 
+monitoring externally from the Ceph dashboards. This allows me scrape the data sources
+that Ceph manages automatically and then store the metrics in an external Prometheus 
+compatible TSDB (in my case Thanos). 
 
-```json
-[
-  {
-    "targets": [
-      "192.168.66.69:9100"
-    ],
-    "labels": {
-      "instance": "atlas"
-    }
-  },
-  {
-    "targets": [
-      "192.168.66.71:9100"
-    ],
-    "labels": {
-      "instance": "electra"
-    }
-  },
-  {
-    "targets": [
-      "192.168.66.70:9100"
-    ],
-    "labels": {
-      "instance": "merope"
-    }
-  },
-  {
-    "targets": [
-      "192.168.66.72:9100"
-    ],
-    "labels": {
-      "instance": "taygeta"
-    }
-  }
-]
-```
+The central problem this simple service solves is locating the node that is currently
+running the Ceph managed Prometheus HTTP Service Discovery. Ironically this service 
+finds on which node the Prometheus service discovery is currently running. It provides 
+a known and unchanging http end-point that can be configured in external systems so 
+Prometheus can find and scrape the services configured by Ceph.   
 
-We need to figure out which server is currently active and then serve up a URL that redirects to the correct server.
+## Running
 
+This service is intended to be run in Kubernetes. It features health and readiness checks.
+But this should be able to be run in any container runtime. 
+
+## Configuration 
+
+This service consumes a static config file that provides a list of possible locations 
+where the Prometheus SD service is running. The repo includes an example which you can 
+customize for your purposes. 
+
+It also supports several environment variables to make changes to default runtime 
+behavior.
+
+| Variable          | Default | Options    |
+| ----------------- | ------- | ---------- | 
+| DEBUG             | False   | True/False |
+| REFRESH_INTERVAL  | 60      | Seconds    |
+| LOCATOR_CONFIG    | config.json | file   |
+
+
+## Example Prometheus config
 
 And the prom config looks like:
 
@@ -61,11 +54,11 @@ And the prom config looks like:
             separator: ;
             regex: (.*)
             target_label: cluster
-            replacement: 8b768c1e-044d-11ef-94fd-0cc47a59362a
+            replacement: 783974-BDA3422
             action: replace
           http_sd_configs:
           - follow_redirects: true
             enable_http2: true
             refresh_interval: 1m
-            url: http://192.168.66.70:8765/sd/prometheus/sd-config?service=node-exporter
+            url: http://<DNS Or Ip Address>/sd/prometheus/sd-config?service=node-exporter
 ```
