@@ -13,7 +13,9 @@ The central problem this simple service solves is locating the node that is curr
 running the Ceph managed Prometheus HTTP Service Discovery. Ironically this service 
 finds on which node the Prometheus service discovery is currently running. It provides 
 a known and unchanging http end-point that can be configured in external systems so 
-Prometheus can find and scrape the services configured by Ceph.   
+Prometheus can find and scrape the services configured by Ceph. Since Ceph is managing
+the services, they can and do change unexpectantly from the perspective of an outside 
+source scraping the metrics.
 
 ## Running
 
