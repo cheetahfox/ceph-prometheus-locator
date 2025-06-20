@@ -88,7 +88,6 @@ func setupHost(hostUrl string, hostName string) {
 		log.Printf("Shutting down host %s at %s\n", hostName, hostUrl)
 	}
 	delete(Hosts, hostName)
-	return
 }
 
 // checkHosts periodically checks if the host is still active and exists in the Hosts map.
@@ -130,6 +129,8 @@ func checkHosts(hostName string) {
 			}
 			Hosts[hostName].Active = false
 		}
+		// Close this directly here since normally we don't exit the loop
+		resp.Body.Close()
 	}
 }
 
