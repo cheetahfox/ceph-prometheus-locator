@@ -98,6 +98,15 @@ func checkHosts(hostName string) {
 		log.Println("Starting check for host:", hostName)
 	}
 
+	connection := &http.Client{
+		Timeout: time.Duration(30) * time.Second,
+		Transport: &http.Transport{
+			// Use a custom transport to disable keep-alive connections.
+			DisableKeepAlives:   true,
+			MaxIdleConnsPerHost: 1,
+		},
+	}
+
 	ticker := time.NewTicker(time.Duration(config.RefreshInterval) * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
@@ -109,7 +118,7 @@ func checkHosts(hostName string) {
 			return
 		}
 
-		resp, err := http.Get(Hosts[hostName].HostUrl)
+		resp, err := connection.Get(Hosts[hostName].HostUrl)
 		if err != nil {
 			if config.Debug {
 				log.Printf("Error checking host %s: %v\n", hostName, err)
