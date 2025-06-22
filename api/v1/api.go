@@ -23,11 +23,18 @@ var (
 func GetLocation(c *fiber.Ctx) error {
 	var header string = "http://"
 
-	url, _, err := getHostUrl()
+	url, running, err := getHostUrl()
 	if err != nil {
 		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "500").Inc()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
+		})
+	}
+
+	if !running {
+		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "404").Inc()
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No active Ceph managed Prometheus server found",
 		})
 	}
 
