@@ -23,17 +23,12 @@ import (
 	"github.com/cheetahfox/ceph-prometheus-locator/health"
 	"github.com/cheetahfox/ceph-prometheus-locator/router"
 
-	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	fmt.Println("Starting ceph prometheus locator...")
 	locator := fiber.New()
-
-	prometheus := fiberprometheus.New("ceph_prometheus_locator")
-	prometheus.RegisterAt(locator, "/metrics")
-	locator.Use(prometheus.Middleware)
 
 	// Setup routes
 	router.SetupRoutes(locator)

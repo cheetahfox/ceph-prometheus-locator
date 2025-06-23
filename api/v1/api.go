@@ -5,7 +5,17 @@ import (
 
 	"github.com/cheetahfox/ceph-prometheus-locator/cephlocator"
 	"github.com/cheetahfox/ceph-prometheus-locator/config"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/gofiber/fiber/v2"
+)
+
+var (
+	apiRequestsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "api_requests_total",
+		Help: "Total number of API requests",
+	}, []string{"method", "endpoint", "status"})
 )
 
 // GetLocation handles the request to redirect to the active Ceph managed Prometheus server
@@ -13,10 +23,18 @@ import (
 func GetLocation(c *fiber.Ctx) error {
 	var header string = "http://"
 
-	url, _, err := getHostUrl()
+	url, running, err := getHostUrl()
 	if err != nil {
+		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "500").Inc()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
+		})
+	}
+
+	if !running {
+		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "404").Inc()
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No active Ceph managed Prometheus server found",
 		})
 	}
 
@@ -34,6 +52,7 @@ func GetLocation(c *fiber.Ctx) error {
 		log.Printf("Redirecting to active Ceph managed Prometheus server: %s\n", hostUrl)
 	}
 
+	apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "302").Inc()
 	return c.Redirect(hostUrl, fiber.StatusFound)
 }
 
@@ -41,17 +60,20 @@ func GetActiveHost(c *fiber.Ctx) error {
 	// This function is similar to GetLocation but returns the active host URL without redirecting.
 	url, running, err := getHostUrl()
 	if err != nil {
+		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "500").Inc()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
 		})
 	}
 
 	if !running {
+		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "404").Inc()
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "No active Ceph managed Prometheus server found",
 		})
 	}
 
+	apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "200").Inc()
 	return c.JSON(fiber.Map{
 		"url": url,
 	})

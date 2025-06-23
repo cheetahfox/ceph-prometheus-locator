@@ -8,7 +8,7 @@ import (
 )
 
 var Urls = []Config{}
-var Debug bool
+var Debug, Profile bool
 var RefreshInterval int = 60
 
 type Config struct {
@@ -23,6 +23,10 @@ func init() {
 	if os.Getenv("DEBUG") == "true" {
 		Debug = true
 		log.Println("Debug mode is enabled")
+	}
+	if os.Getenv("PROFILE") == "true" {
+		Profile = true
+		log.Println("Profiling mode is enabled")
 	}
 	if interval := os.Getenv("REFRESH_INTERVAL"); interval != "" {
 		if parsedInterval, err := strconv.Atoi(interval); err == nil {
