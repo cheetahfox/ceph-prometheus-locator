@@ -1,6 +1,7 @@
 package cephlocator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -118,7 +119,17 @@ func checkHosts(hostName string) {
 			return
 		}
 
-		resp, err := connection.Get(Hosts[hostName].HostUrl)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Second*30)
+		defer cncl()
+		req, err := http.NewRequestWithContext(ctx, "GET", Hosts[hostName].HostUrl, nil)
+		if err != nil {
+			if config.Debug {
+				log.Printf("Error creating request for host %s: %v\n", hostName, err)
+			}
+			continue
+		}
+
+		resp, err := connection.Do(req)
 		if err != nil {
 			if config.Debug {
 				log.Printf("Error checking host %s: %v\n", hostName, err)
@@ -140,6 +151,7 @@ func checkHosts(hostName string) {
 		}
 		// Close this directly here since normally we don't exit the loop
 		resp.Body.Close()
+		cncl()
 	}
 }
 
