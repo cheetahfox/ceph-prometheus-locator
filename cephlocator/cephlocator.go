@@ -110,7 +110,9 @@ func timedCheck(hostName string) {
 
 		err := checkHost(hostName)
 		if err != nil {
-			log.Printf("%s", err)
+			if config.Debug {
+				log.Printf("%s", err)
+			}
 			continue
 		}
 	}
