@@ -25,14 +25,14 @@ func GetLocation(c *fiber.Ctx) error {
 
 	url, running, err := getHostUrl()
 	if err != nil {
-		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "500").Inc()
+		apiRequestsTotal.WithLabelValues(c.Method(), "/sd/prometheus/sd-config", "500").Inc()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
 		})
 	}
 
 	if !running {
-		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "404").Inc()
+		apiRequestsTotal.WithLabelValues(c.Method(), "/sd/prometheus/sd-config", "404").Inc()
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "No active Ceph managed Prometheus server found",
 		})
@@ -52,7 +52,14 @@ func GetLocation(c *fiber.Ctx) error {
 		log.Printf("Redirecting to active Ceph managed Prometheus server: %s\n", hostUrl)
 	}
 
-	apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "302").Inc()
+	if config.Debug {
+		log.Println("Debug mode is enabled. Logging request details:")
+		log.Printf("Method: %s\n", c.Method())
+		log.Printf("Path: %s\n", c.Path())
+		log.Printf("Query parameters: %v\n", qparms)
+	}
+
+	apiRequestsTotal.WithLabelValues(c.Method(), "/sd/prometheus/sd-config", "302").Inc()
 	return c.Redirect(hostUrl, fiber.StatusFound)
 }
 
@@ -60,20 +67,26 @@ func GetActiveHost(c *fiber.Ctx) error {
 	// This function is similar to GetLocation but returns the active host URL without redirecting.
 	url, running, err := getHostUrl()
 	if err != nil {
-		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "500").Inc()
+		apiRequestsTotal.WithLabelValues(c.Method(), "/api/v1/status", "500").Inc()
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to retrieve Ceph managed Prometheus server URL",
 		})
 	}
 
 	if !running {
-		apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "404").Inc()
+		apiRequestsTotal.WithLabelValues(c.Method(), "/api/v1/status", "404").Inc()
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "No active Ceph managed Prometheus server found",
 		})
 	}
 
-	apiRequestsTotal.WithLabelValues(c.Method(), c.Path(), "200").Inc()
+	if config.Debug {
+		log.Println("Debug mode is enabled. Logging request details:")
+		log.Printf("Method: %s\n", c.Method())
+		log.Printf("Path: %s\n", c.Path())
+	}
+
+	apiRequestsTotal.WithLabelValues(c.Method(), "/api/v1/status", "200").Inc()
 	return c.JSON(fiber.Map{
 		"url": url,
 	})
