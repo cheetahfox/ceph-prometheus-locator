@@ -82,7 +82,7 @@ func setupHost(hostUrl string, hostName string) {
 		Shutdown: make(chan bool, 1),
 	}
 
-	go checkHosts(hostName)
+	go timedCheck(hostName)
 
 	<-Hosts[hostName].Shutdown
 	if config.Debug {
@@ -94,11 +94,34 @@ func setupHost(hostUrl string, hostName string) {
 // checkHosts periodically checks if the host is still active and exists in the Hosts map.
 // Then it will check if the hosts is serving up the prometheus metrics endpoint. If it is
 // we set the host to active.
-func checkHosts(hostName string) {
+func timedCheck(hostName string) {
 	if config.Debug {
 		log.Println("Starting check for host:", hostName)
 	}
 
+	ticker := time.NewTicker(time.Duration(config.RefreshInterval) * time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
+		// Check that the host still exists so we should monitor it.
+		if _, exists := Hosts[hostName]; !exists {
+			log.Printf("Host %s no longer exists, stopping check.\n", hostName)
+			return
+		}
+
+		err := checkHost(hostName)
+		if err != nil {
+			log.Printf("%s", err)
+			continue
+		}
+	}
+}
+
+/*
+This function checks if the host is active by making an HTTP GET request to the host URL.
+I am doing this in a separate func so Golang can clean up the request and response. It
+directly modifies the Hosts map to set the Active status of the host based on the response.
+*/
+func checkHost(hostName string) error {
 	connection := &http.Client{
 		Timeout: time.Duration(30) * time.Second,
 		Transport: &http.Transport{
@@ -108,51 +131,33 @@ func checkHosts(hostName string) {
 		},
 	}
 
-	ticker := time.NewTicker(time.Duration(config.RefreshInterval) * time.Second)
-	defer ticker.Stop()
-	for range ticker.C {
-		// Check that the host still exists so we should monitor it.
-		if _, exists := Hosts[hostName]; !exists {
-			if config.Debug {
-				log.Printf("Host %s no longer exists, stopping check.\n", hostName)
-			}
-			return
-		}
-
-		ctx, cncl := context.WithTimeout(context.Background(), time.Second*30)
-		defer cncl()
-		req, err := http.NewRequestWithContext(ctx, "GET", Hosts[hostName].HostUrl, nil)
-		if err != nil {
-			if config.Debug {
-				log.Printf("Error creating request for host %s: %v\n", hostName, err)
-			}
-			continue
-		}
-
-		resp, err := connection.Do(req)
-		if err != nil {
-			if config.Debug {
-				log.Printf("Error checking host %s: %v\n", hostName, err)
-			}
-			Hosts[hostName].Active = false
-			continue
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode == http.StatusOK {
-			if config.Debug {
-				log.Printf("Host %s is active at %s\n", hostName, Hosts[hostName].HostUrl)
-			}
-			Hosts[hostName].Active = true
-		} else {
-			if config.Debug {
-				log.Printf("Host %s is not active at %s, status code: %d\n", hostName, Hosts[hostName].HostUrl, resp.StatusCode)
-			}
-			Hosts[hostName].Active = false
-		}
-		// Close this directly here since normally we don't exit the loop
-		resp.Body.Close()
-		cncl()
+	ctx, cncl := context.WithTimeout(context.Background(), time.Second*30)
+	defer cncl()
+	req, err := http.NewRequestWithContext(ctx, "GET", Hosts[hostName].HostUrl, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request for host %s: %w", hostName, err)
 	}
+
+	resp, err := connection.Do(req)
+	if err != nil {
+		Hosts[hostName].Active = false
+		return fmt.Errorf("failed to check host %s: %w", hostName, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		if config.Debug {
+			log.Printf("Host %s is active at %s\n", hostName, Hosts[hostName].HostUrl)
+		}
+		Hosts[hostName].Active = true
+	} else {
+		if config.Debug {
+			log.Printf("Host %s is not active at %s, status code: %d\n", hostName, Hosts[hostName].HostUrl, resp.StatusCode)
+		}
+		Hosts[hostName].Active = false
+	}
+
+	return nil
 }
 
 // stripHttpParam removes any http parameters from the host URL.
