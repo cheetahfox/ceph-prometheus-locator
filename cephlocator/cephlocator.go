@@ -91,7 +91,7 @@ func setupHost(hostUrl string, hostName string) {
 	delete(Hosts, hostName)
 }
 
-// checkHosts periodically checks if the host is still active and exists in the Hosts map.
+// timedCheck periodically checks if the host is still active and exists in the Hosts map.
 // Then it will check if the hosts is serving up the prometheus metrics endpoint. If it is
 // we set the host to active.
 func timedCheck(hostName string) {
