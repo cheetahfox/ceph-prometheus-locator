@@ -148,14 +148,8 @@ func checkHost(hostName string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		if config.Debug {
-			log.Printf("Host %s is active at %s\n", hostName, Hosts[hostName].HostUrl)
-		}
 		Hosts[hostName].Active = true
 	} else {
-		if config.Debug {
-			log.Printf("Host %s is not active at %s, status code: %d\n", hostName, Hosts[hostName].HostUrl, resp.StatusCode)
-		}
 		Hosts[hostName].Active = false
 	}
 
