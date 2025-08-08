@@ -3,7 +3,7 @@ module github.com/cheetahfox/ceph-prometheus-locator
 go 1.24.2
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.8
+	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/prometheus/client_golang v1.22.0
 )
 
