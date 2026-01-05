@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// Set the service as ready.
-	health.Ready = true
+	health.SetReady(true)
 
 	// Listen for Sigint or SigTerm and exit if you get them.
 	sigs := make(chan os.Signal, 1)
