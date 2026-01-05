@@ -1,3 +1,4 @@
+// Module api/v1 implements the API version 1 handlers for the Ceph Prometheus Locator service.
 package v1
 
 import (
