@@ -1,4 +1,4 @@
-// Module cephlocator provides functionality to locate and monitor Ceph managed Prometheus servers.
+// Package cephlocator provides functionality to locate and monitor Ceph managed Prometheus servers.
 package cephlocator
 
 import (
