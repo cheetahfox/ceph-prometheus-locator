@@ -1,4 +1,4 @@
-// Module config handles the configuration settings for the Ceph Prometheus Locator service.
+// Package config handles the configuration settings for the Ceph Prometheus Locator service.
 package config
 
 import (
