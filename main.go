@@ -8,7 +8,7 @@ on any of the nodes in the cluster. If something changes in the cluster it can m
 to a new node without warning and it will break my monitoring setup.
 
 Could I solve this differently? Yeah, I do different things like scraping the Prometheus
-node exporters directly, but it's nice that ceph manges everything so I just need to
+node exporters directly, but it's nice that ceph manages everything so I just need to
 pull the metrics from one place.
 */
 package main

@@ -1,3 +1,4 @@
+// Package health provides health and readiness check handlers for the Ceph Prometheus Locator service.
 package health
 
 import (

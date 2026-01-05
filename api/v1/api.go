@@ -1,3 +1,4 @@
+// Package v1 implements the API version 1 handlers for the Ceph Prometheus Locator service.
 package v1
 
 import (
@@ -48,17 +49,6 @@ func GetLocation(c *fiber.Ctx) error {
 		}
 	}
 
-	if config.Debug {
-		log.Printf("Redirecting to active Ceph managed Prometheus server: %s\n", hostUrl)
-	}
-
-	if config.Debug {
-		log.Println("Debug mode is enabled. Logging request details:")
-		log.Printf("Method: %s\n", c.Method())
-		log.Printf("Path: %s\n", c.Path())
-		log.Printf("Query parameters: %v\n", qparms)
-	}
-
 	apiRequestsTotal.WithLabelValues(c.Method(), "/sd/prometheus/sd-config", "302").Inc()
 	return c.Redirect(hostUrl, fiber.StatusFound)
 }
@@ -78,12 +68,6 @@ func GetActiveHost(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "No active Ceph managed Prometheus server found",
 		})
-	}
-
-	if config.Debug {
-		log.Println("Debug mode is enabled. Logging request details:")
-		log.Printf("Method: %s\n", c.Method())
-		log.Printf("Path: %s\n", c.Path())
 	}
 
 	apiRequestsTotal.WithLabelValues(c.Method(), "/api/v1/status", "200").Inc()
