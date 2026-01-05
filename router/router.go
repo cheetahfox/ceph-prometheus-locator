@@ -1,4 +1,4 @@
-// Module router sets up the HTTP routes for the Ceph Prometheus Locator service.
+// Package router sets up the HTTP routes for the Ceph Prometheus Locator service.
 package router
 
 import (
