@@ -65,4 +65,6 @@ func main() {
 
 	<-done
 	fmt.Println("Shutdown Started")
+	locator.Shutdown()
+	fmt.Println("Shutdown Complete")
 }
