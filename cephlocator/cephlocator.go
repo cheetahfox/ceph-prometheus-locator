@@ -8,12 +8,16 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/cheetahfox/ceph-prometheus-locator/config"
 )
 
-var Hosts map[string]*Host
+var (
+	Hosts   map[string]*Host
+	hostsMu sync.RWMutex
+)
 
 type Host struct {
 	HostUrl  string
@@ -32,7 +36,9 @@ func GetActiveHost() (string, bool, error) {
 	var activeHostUrl, activeHost string
 	var foundActive bool
 
+	hostsMu.RLock()
 	if len(Hosts) == 0 {
+		hostsMu.RUnlock()
 		err := fmt.Errorf("No active Ceph managed Prometheus server found. Please configure hosts in the config file.")
 		return "", false, err
 	}
@@ -44,6 +50,7 @@ func GetActiveHost() (string, bool, error) {
 			break // We only need the first active host, should only be one in any case.
 		}
 	}
+	hostsMu.RUnlock()
 
 	if foundActive {
 		hostUrl, err := stripHttpParam(activeHost)
@@ -76,20 +83,25 @@ func setupHost(hostUrl string, hostName string) {
 		log.Printf("registered host %s at %s\n", hostName, hostUrl)
 	}
 
+	hostsMu.Lock()
 	Hosts[hostName] = &Host{
 		HostUrl:  hostUrl,
 		HostName: hostName,
 		Active:   false,
 		Shutdown: make(chan bool, 1),
 	}
+	shutdownChan := Hosts[hostName].Shutdown
+	hostsMu.Unlock()
 
 	go timedCheck(hostName)
 
-	<-Hosts[hostName].Shutdown
+	<-shutdownChan
 	if config.Debug {
 		log.Printf("Shutting down host %s at %s\n", hostName, hostUrl)
 	}
+	hostsMu.Lock()
 	delete(Hosts, hostName)
+	hostsMu.Unlock()
 }
 
 // timedCheck periodically checks if the host is still active and exists in the Hosts map.
@@ -104,7 +116,10 @@ func timedCheck(hostName string) {
 	defer ticker.Stop()
 	for range ticker.C {
 		// Check that the host still exists so we should monitor it.
-		if _, exists := Hosts[hostName]; !exists {
+		hostsMu.RLock()
+		_, exists := Hosts[hostName]
+		hostsMu.RUnlock()
+		if !exists {
 			log.Printf("Host %s no longer exists, stopping check.\n", hostName)
 			return
 		}
@@ -136,23 +151,32 @@ func checkHost(hostName string) error {
 
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second*30)
 	defer cncl()
-	req, err := http.NewRequestWithContext(ctx, "GET", Hosts[hostName].HostUrl, nil)
+
+	hostsMu.RLock()
+	hostUrl := Hosts[hostName].HostUrl
+	hostsMu.RUnlock()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", hostUrl, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request for host %s: %w", hostName, err)
 	}
 
 	resp, err := connection.Do(req)
 	if err != nil {
+		hostsMu.Lock()
 		Hosts[hostName].Active = false
+		hostsMu.Unlock()
 		return fmt.Errorf("failed to check host %s: %w", hostName, err)
 	}
 	defer resp.Body.Close()
 
+	hostsMu.Lock()
 	if resp.StatusCode == http.StatusOK {
 		Hosts[hostName].Active = true
 	} else {
 		Hosts[hostName].Active = false
 	}
+	hostsMu.Unlock()
 
 	return nil
 }
