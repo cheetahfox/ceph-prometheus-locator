@@ -153,7 +153,12 @@ func checkHost(hostName string) error {
 	defer cncl()
 
 	hostsMu.RLock()
-	hostUrl := Hosts[hostName].HostUrl
+	host, exists := Hosts[hostName]
+	if !exists {
+		hostsMu.RUnlock()
+		return fmt.Errorf("host %s no longer exists", hostName)
+	}
+	hostUrl := host.HostUrl
 	hostsMu.RUnlock()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", hostUrl, nil)
@@ -164,17 +169,21 @@ func checkHost(hostName string) error {
 	resp, err := connection.Do(req)
 	if err != nil {
 		hostsMu.Lock()
-		Hosts[hostName].Active = false
+		if host, exists := Hosts[hostName]; exists {
+			host.Active = false
+		}
 		hostsMu.Unlock()
 		return fmt.Errorf("failed to check host %s: %w", hostName, err)
 	}
 	defer resp.Body.Close()
 
 	hostsMu.Lock()
-	if resp.StatusCode == http.StatusOK {
-		Hosts[hostName].Active = true
-	} else {
-		Hosts[hostName].Active = false
+	if host, exists := Hosts[hostName]; exists {
+		if resp.StatusCode == http.StatusOK {
+			host.Active = true
+		} else {
+			host.Active = false
+		}
 	}
 	hostsMu.Unlock()
 
