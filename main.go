@@ -65,6 +65,7 @@ func main() {
 
 	<-done
 	fmt.Println("Shutdown Started")
+	cephlocator.Shutdown()
 	locator.Shutdown()
 	fmt.Println("Shutdown Complete")
 }
