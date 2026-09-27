@@ -11,6 +11,7 @@ import (
 var Urls = []Config{}
 var Debug, Profile bool
 var RefreshInterval int = 60
+var HostDomain string
 
 type Config struct {
 	HostUrl  string `json:"url"`
@@ -18,8 +19,12 @@ type Config struct {
 }
 
 func init() {
+	HostDomain = os.Getenv("HOST_DOMAIN")
 	if err := readHosts(); err != nil {
 		panic("Failed to read hosts: " + err.Error())
+	}
+	if HostDomain != "" {
+		log.Printf("Host domain set to %s\n", HostDomain)
 	}
 	if os.Getenv("DEBUG") == "true" {
 		Debug = true

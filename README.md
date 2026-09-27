@@ -36,6 +36,13 @@ behavior.
 | DEBUG             | False   | True/False |
 | REFRESH_INTERVAL  | 60      | Seconds    |
 | LOCATOR_CONFIG    | config.json | file   |
+| HOST_DOMAIN       | (unset) | DNS domain suffix for the active host |
+
+The `/sd/prometheus/sd-config` endpoint fetches the active manager's service-discovery
+response. When `HOST_DOMAIN` is set, it keeps each advertised target's first DNS label
+and replaces the rest of its hostname with the configured domain. For example,
+`atlas.pleaides:9283` becomes `atlas.cheetahfox.com:9283` with
+`HOST_DOMAIN=cheetahfox.com`. IP-address targets are left unchanged.
 
 
 ## Example Prometheus config
